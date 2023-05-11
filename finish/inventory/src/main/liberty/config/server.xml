@@ -55,16 +55,6 @@
         </application-bnd>
     </webApplication>
 
-    <jwtSso jwtBuilderRef="jwtInventoryBuilder"/> 
-    <jwtBuilder id="jwtInventoryBuilder" 
-                issuer="http://openliberty.io" 
-                audiences="systemService"
-                expiry="24h"/>
-    <mpJwt audiences="systemService" 
-           groupNameAttribute="groups" 
-           id="myMpJwt" 
-           issuer="http://openliberty.io"/>
-
     <!-- Default SSL configuration enables trust for default certificates from the Java runtime -->
     <ssl id="defaultSSLConfig" trustDefaultCerts="true" />
 
