@@ -57,6 +57,8 @@ public class SystemResourceIT {
     //@Container
     public static GenericContainer<?> postgresContainer
         = new GenericContainer<>(postgresImageName)
+              .withEnv("POSTGRES_USER", "admin")
+              .withEnv("POSTGRES_PASSWORD", "adminpwd")
               .withNetwork(network)
               .withExposedPorts(5432)
               .withNetworkAliases(postgresHost)
@@ -117,7 +119,6 @@ public class SystemResourceIT {
     		} else {
     			postgresContainer.start();
            	    libertyContainer.start();
-           	 System.out.println("TEST: " + urlPath);
                 urlPath = libertyContainer.getBaseURL(getProtocol());
     		}
     	}
