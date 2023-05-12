@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 // testcontainers imports
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
 public class LibertyContainer extends GenericContainer<LibertyContainer> {
 
@@ -23,18 +24,19 @@ public class LibertyContainer extends GenericContainer<LibertyContainer> {
 
     public LibertyContainer(final String dockerImageName, boolean testHttps) {
         super(dockerImageName);
-        // wait for smarter planet message by default
         if (testHttps) {
-            this.addExposedPorts(9443, 9080);
+            addExposedPorts(9443, 9080);
         } else {
-            this.addExposedPorts(9080);
+            addExposedPorts(9080);
         }
+        // wait for smarter planet message by default
+        waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
     }
 
     // tag::getBaseURL[]
     public String getBaseURL(String protocol) throws IllegalStateException {
-    	return protocol + "://" + this.getContainerIpAddress()
-            + ":" + this.getFirstMappedPort();
+    	return protocol + "://" + getContainerIpAddress()
+            + ":" + getFirstMappedPort();
     }
     // end::getBaseURL[]
 

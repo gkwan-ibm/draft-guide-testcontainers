@@ -51,34 +51,24 @@ public class SystemResourceIT {
     private static String urlPath;
     
     public static SystemResourceClient client;
-    // tag::network[]
     public static Network network = Network.newNetwork();
-    // end::network[]
     private static String authHeader;
 
-    // tag::postgresSetup[]
+    //@Container
     public static GenericContainer<?> postgresContainer
         = new GenericContainer<>(postgresImageName)
-              // tag::pNetwork[]
               .withNetwork(network)
-              // end::pNetwork[]
               .withExposedPorts(5432)
               .withNetworkAliases(postgresHost)
               .withLogConsumer(new Slf4jLogConsumer(logger));
-    // end::postgresSetup[]
 
-    // tag::libertySetup[]
+    //@Container
     public static LibertyContainer libertyContainer
         = new LibertyContainer(appImageName,testHttps())
               .withEnv("POSTGRES_HOSTNAME", postgresHost)
-              // tag::lNetwork[]
               .withNetwork(network)
-              // end::lNetwork[]
-              // tag::health[]
-              //.waitingFor(Wait.forHttps("/health/ready"))
-              // end::health[]
+              .waitingFor(Wait.forHttp("/health/ready").forPort(9080))
               .withLogConsumer(new Slf4jLogConsumer(logger));
-    // end::libertySetup[]
 
     private static boolean isServiceRunning(String host, int port) {
         try {
@@ -98,7 +88,6 @@ public class SystemResourceIT {
         return getProtocol().equalsIgnoreCase("https");
     }
     
-    // tag::createRestClient[]
     private static SystemResourceClient createRestClient() throws KeyStoreException {
         ClientBuilder builder = ResteasyClientBuilder.newBuilder();
         if (testHttps()) {
@@ -108,7 +97,6 @@ public class SystemResourceIT {
         ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
         return target.proxy(SystemResourceClient.class);
     }
-    // end::createRestClient[]
 
     @BeforeAll
     public static void setup() throws Exception {
@@ -129,8 +117,7 @@ public class SystemResourceIT {
     		} else {
     			postgresContainer.start();
            	    libertyContainer.start();
-           	    libertyContainer.waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
-          	    libertyContainer.waitingFor(Wait.forHttps("/health/ready"));
+           	 System.out.println("TEST: " + urlPath);
                 urlPath = libertyContainer.getBaseURL(getProtocol());
     		}
     	}
