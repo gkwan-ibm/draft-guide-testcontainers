@@ -19,6 +19,9 @@ import java.security.KeyStoreException;
 import java.util.Base64;
 import java.util.List;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSession;
+
 import org.jboss.resteasy.client.jaxrs.ResteasyClient;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.resteasy.client.jaxrs.ResteasyWebTarget;
@@ -57,8 +60,6 @@ public class SystemResourceIT {
     //@Container
     public static GenericContainer<?> postgresContainer
         = new GenericContainer<>(postgresImageName)
-              .withEnv("POSTGRES_USER", "admin")
-              .withEnv("POSTGRES_PASSWORD", "adminpwd")
               .withNetwork(network)
               .withExposedPorts(5432)
               .withNetworkAliases(postgresHost)
@@ -78,7 +79,7 @@ public class SystemResourceIT {
             socket.close();
             return true;
         } catch (Exception e) {
-        	return false;
+            return false;
         }
     }
     
@@ -93,7 +94,13 @@ public class SystemResourceIT {
     private static SystemResourceClient createRestClient() throws KeyStoreException {
         ClientBuilder builder = ResteasyClientBuilder.newBuilder();
         if (testHttps()) {
-        	builder.trustStore(KeyStore.getInstance("PKCS12"));
+            builder.trustStore(KeyStore.getInstance("PKCS12"));
+            HostnameVerifier v = new HostnameVerifier() {
+                @Override
+                public boolean verify(String hostname, SSLSession session) {
+                    return hostname.equals("localhost") || hostname.equals("docker");
+                } };
+            builder.hostnameVerifier(v );
         }
         ResteasyClient client = (ResteasyClient) builder.build();
         ResteasyWebTarget target = client.target(UriBuilder.fromPath(urlPath));
@@ -102,26 +109,26 @@ public class SystemResourceIT {
 
     @BeforeAll
     public static void setup() throws Exception {
-    	if (isServiceRunning("localhost", 9080)) {
-    		logger.info("Testing by dev mode or local runtime...");
-    		if (isServiceRunning("localhost", 5432)) {
-    			logger.info("The application is ready to test.");
-        		urlPath = getProtocol() + "://localhost:9443";
-        	} else {
-        		throw new Exception(
-      	            "Postgres database is not running");
-    		}
-    	} else {
-    		logger.info("Testing by using Testcontainers...");
-    		if (isServiceRunning("localhost", 5432)) {
-        		throw new Exception(
-          	        "Postgres database is running locally. Stop it and retry.");    			
-    		} else {
-    			postgresContainer.start();
-           	    libertyContainer.start();
+        if (isServiceRunning("localhost", 9080)) {
+            logger.info("Testing by dev mode or local runtime...");
+            if (isServiceRunning("localhost", 5432)) {
+                logger.info("The application is ready to test.");
+                urlPath = getProtocol() + "://localhost:9443";
+            } else {
+                throw new Exception(
+                      "Postgres database is not running");
+            }
+        } else {
+            logger.info("Testing by using Testcontainers...");
+            if (isServiceRunning("localhost", 5432)) {
+                throw new Exception(
+                      "Postgres database is running locally. Stop it and retry.");                
+            } else {
+                postgresContainer.start();
+                   libertyContainer.start();
                 urlPath = libertyContainer.getBaseURL(getProtocol());
-    		}
-    	}
+            }
+        }
         urlPath += appPath;
         System.out.println("TEST: " + urlPath);
         client = createRestClient();
@@ -129,7 +136,7 @@ public class SystemResourceIT {
         authHeader = "Basic "
             + Base64.getEncoder().encodeToString(userPassword.getBytes());
     }
-    
+
     @AfterAll
     public static void tearDown() {
         postgresContainer.stop();
