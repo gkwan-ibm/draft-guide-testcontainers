@@ -60,9 +60,6 @@ public class SystemResource {
     @ConfigProperty(name = "client.https.port")
     String CLIENT_PORT;
 
-    @Inject
-    JsonWebToken jwt;
-
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
