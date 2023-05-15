@@ -108,7 +108,7 @@ public class SystemResourceIT {
     @BeforeAll
     public static void setup() throws Exception {
         String urlPath;
-		if (isServiceRunning("localhost", 9080)) {
+        if (isServiceRunning("localhost", 9080)) {
             logger.info("Testing by dev mode or local runtime...");
             if (isServiceRunning("localhost", 5432)) {
                 logger.info("The application is ready to test.");
