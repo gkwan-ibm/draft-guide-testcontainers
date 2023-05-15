@@ -51,8 +51,6 @@ public class SystemResourceIT {
     private static String postgresImageName = "postgres-sample:latest";
     private static String appImageName = "liberty-deepdive-inventory:1.0-SNAPSHOT";
 
-    private static String urlPath;
-    
     public static SystemResourceClient client;
     public static Network network = Network.newNetwork();
     private static String authHeader;
@@ -91,7 +89,7 @@ public class SystemResourceIT {
         return getProtocol().equalsIgnoreCase("https");
     }
     
-    private static SystemResourceClient createRestClient() throws KeyStoreException {
+    private static SystemResourceClient createRestClient(String urlPath) throws KeyStoreException {
         ClientBuilder builder = ResteasyClientBuilder.newBuilder();
         if (testHttps()) {
             builder.trustStore(KeyStore.getInstance("PKCS12"));
@@ -109,7 +107,8 @@ public class SystemResourceIT {
 
     @BeforeAll
     public static void setup() throws Exception {
-        if (isServiceRunning("localhost", 9080)) {
+        String urlPath;
+		if (isServiceRunning("localhost", 9080)) {
             logger.info("Testing by dev mode or local runtime...");
             if (isServiceRunning("localhost", 5432)) {
                 logger.info("The application is ready to test.");
@@ -125,13 +124,13 @@ public class SystemResourceIT {
                       "Postgres database is running locally. Stop it and retry.");                
             } else {
                 postgresContainer.start();
-                   libertyContainer.start();
+                libertyContainer.start();
                 urlPath = libertyContainer.getBaseURL(getProtocol());
             }
         }
         urlPath += appPath;
         System.out.println("TEST: " + urlPath);
-        client = createRestClient();
+        client = createRestClient(urlPath);
         String userPassword = "bob" + ":" + "bobpwd";
         authHeader = "Basic "
             + Base64.getEncoder().encodeToString(userPassword.getBytes());
