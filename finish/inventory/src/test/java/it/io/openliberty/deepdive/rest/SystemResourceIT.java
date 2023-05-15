@@ -46,29 +46,35 @@ import jakarta.ws.rs.core.UriBuilder;
 public class SystemResourceIT {
 
     private static Logger logger = LoggerFactory.getLogger(SystemResourceIT.class);
-    private static String appPath = "/inventory/api";
-    private static String postgresHost = "postgres";
-    private static String postgresImageName = "postgres-sample:latest";
-    private static String appImageName = "liberty-deepdive-inventory:1.0-SNAPSHOT";
+    
+    private static int HTTP_PORT = Integer.parseInt(System.getProperty("http.port"));
+    private static int HTTPS_PORT = Integer.parseInt(System.getProperty("https.port"));
+    private static String APP_PATH = System.getProperty("context.root") + "/api";
+    private static String APP_IMAGE = "inventory:1.0-SNAPSHOT";
+    private static String USER_PASSWORD = "bob" + ":" + "bobpwd";
 
-    public static SystemResourceClient client;
-    public static Network network = Network.newNetwork();
+    private static String POSTGRES_HOST = "postgres";
+    private static int POSTGRES_PORT = 5432;
+    private static String POSTGRES_IMAGE = "postgres-sample:latest";
+
+    private static SystemResourceClient client;
+    private static Network network = Network.newNetwork();
     private static String authHeader;
 
     //@Container
-    public static GenericContainer<?> postgresContainer
-        = new GenericContainer<>(postgresImageName)
+    private static GenericContainer<?> postgresContainer
+        = new GenericContainer<>(POSTGRES_IMAGE)
               .withNetwork(network)
-              .withExposedPorts(5432)
-              .withNetworkAliases(postgresHost)
+              .withExposedPorts(POSTGRES_PORT)
+              .withNetworkAliases(POSTGRES_HOST)
               .withLogConsumer(new Slf4jLogConsumer(logger));
 
     //@Container
-    public static LibertyContainer libertyContainer
-        = new LibertyContainer(appImageName,testHttps())
-              .withEnv("POSTGRES_HOSTNAME", postgresHost)
+    private static LibertyContainer inventoryContainer
+        = new LibertyContainer(APP_IMAGE, testHttps(), HTTPS_PORT, HTTP_PORT)
+              .withEnv("POSTGRES_HOSTNAME", POSTGRES_HOST)
               .withNetwork(network)
-              .waitingFor(Wait.forHttp("/health/ready").forPort(9080))
+              .waitingFor(Wait.forHttp("/health/ready").forPort(HTTP_PORT))
               .withLogConsumer(new Slf4jLogConsumer(logger));
 
     private static boolean isServiceRunning(String host, int port) {
@@ -108,38 +114,38 @@ public class SystemResourceIT {
     @BeforeAll
     public static void setup() throws Exception {
         String urlPath;
-        if (isServiceRunning("localhost", 9080)) {
+        if (isServiceRunning("localhost", HTTP_PORT)) {
             logger.info("Testing by dev mode or local runtime...");
-            if (isServiceRunning("localhost", 5432)) {
+            if (isServiceRunning("localhost", POSTGRES_PORT)) {
                 logger.info("The application is ready to test.");
-                urlPath = getProtocol() + "://localhost:9443";
+                urlPath = getProtocol() + "://localhost:"
+                          + (testHttps() ? HTTPS_PORT : HTTP_PORT);
             } else {
                 throw new Exception(
                       "Postgres database is not running");
             }
         } else {
             logger.info("Testing by using Testcontainers...");
-            if (isServiceRunning("localhost", 5432)) {
+            if (isServiceRunning("localhost", POSTGRES_PORT)) {
                 throw new Exception(
                       "Postgres database is running locally. Stop it and retry.");                
             } else {
                 postgresContainer.start();
-                libertyContainer.start();
-                urlPath = libertyContainer.getBaseURL(getProtocol());
+                inventoryContainer.start();
+                urlPath = inventoryContainer.getBaseURL(getProtocol());
             }
         }
-        urlPath += appPath;
+        urlPath += APP_PATH;
         System.out.println("TEST: " + urlPath);
         client = createRestClient(urlPath);
-        String userPassword = "bob" + ":" + "bobpwd";
         authHeader = "Basic "
-            + Base64.getEncoder().encodeToString(userPassword.getBytes());
+            + Base64.getEncoder().encodeToString(USER_PASSWORD.getBytes());
     }
 
     @AfterAll
     public static void tearDown() {
+        inventoryContainer.stop();
         postgresContainer.stop();
-        libertyContainer.stop();
         network.close();
     }
 

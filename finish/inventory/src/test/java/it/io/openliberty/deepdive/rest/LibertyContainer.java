@@ -11,26 +11,23 @@
 // end::copyright[]
 package it.io.openliberty.deepdive.rest;
 
-// logger imports
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-// testcontainers imports
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 public class LibertyContainer extends GenericContainer<LibertyContainer> {
 
-    static final Logger LOGGER = LoggerFactory.getLogger(LibertyContainer.class);
-
-    public LibertyContainer(final String dockerImageName, boolean testHttps) {
-        super(dockerImageName);
+    public LibertyContainer(
+    	String imageName, boolean testHttps, int httpsPort, int httpPort) {
+        
+    	super(imageName);
         if (testHttps) {
-            addExposedPorts(9443, 9080);
+            addExposedPorts(httpsPort, httpPort);
         } else {
-            addExposedPorts(9080);
+            addExposedPorts(httpPort);
         }
         // wait for smarter planet message by default
         waitingFor(Wait.forLogMessage("^.*CWWKF0011I.*$", 1));
+
     }
 
     // tag::getBaseURL[]
