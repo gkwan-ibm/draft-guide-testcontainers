@@ -12,10 +12,10 @@
     <variable name="default.context.root" defaultValue="/inventory" />
     <!-- end::contextRoot[] -->
     <!-- tag::variables[] -->
-    <variable name="postgres/hostname" defaultValue="localhost" />
-    <variable name="postgres/portnum" defaultValue="5432" />
-    <variable name="postgres/username" defaultValue="admin" />
-    <variable name="postgres/password" defaultValue="adminpwd" />
+    <variable name="db.hostname" defaultValue="localhost" />
+    <variable name="db.portnum" defaultValue="5432" />
+    <variable name="db.username" defaultValue="admin" />
+    <variable name="db.password" defaultValue="adminpwd" />
     <!-- end::variables[] -->
 
     <httpEndpoint id="defaultHttpEndpoint"
@@ -65,10 +65,10 @@
         <jdbcDriver libraryRef="postgresql-library" />
         <!-- tag::postgresProperties[] -->
         <properties.postgresql databaseName="admin"
-                               serverName="${postgres/hostname}"
-                               portNumber="${postgres/portnum}"
-                               user="${postgres/username}"
-                               password="${postgres/password}"/>
+                               serverName="${db.hostname}"
+                               portNumber="${db.portnum}"
+                               user="${db.username}"
+                               password="${db.password}"/>
         <!-- end::postgresProperties[] -->
     </dataSource>
 </server>

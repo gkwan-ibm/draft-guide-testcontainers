@@ -33,11 +33,11 @@ import java.net.Socket;
 public class ReadinessCheck implements HealthCheck {
 
     @Inject
-    @ConfigProperty(name = "postgres/hostname")
+    @ConfigProperty(name = "db.hostname")
     private String host;
 
     @Inject
-    @ConfigProperty(name = "postgres/portnum")
+    @ConfigProperty(name = "db.portnum")
     private int port;
 
     @Override
